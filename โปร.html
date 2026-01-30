@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QIN SHI HUANG | มหาจักรพรรดิเหนือบัลลังก์มังกร</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;700&family=Orbitron:wght@400;900&family=Sarabun:wght@200;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #ff0000; 
+            --gold: #d4af37;
+            --bg-dark: #0a0a0a;
+            --panel-bg: rgba(255, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Chakra Petch', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            cursor: crosshair;
+            line-height: 1.6;
+        }
+
+        /* Background & Effects */
+        .bg-main {
+            position: fixed; inset: 0; z-index: -10;
+            background: url(https://i.pinimg.com/originals/c2/1c/69/c21c69b252ff1262ec3acba5c79725f1.gif) center/cover no-repeat;
+            filter: brightness(0.25) grayscale(0.6);
+        }
+        #network-canvas { position: fixed; inset: 0; z-index: -9; pointer-events: none; opacity: 0.3; }
+        .vignette { position: fixed; inset: 0; z-index: -8; background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.9) 100%); }
+
+        /* Navbar ปรับให้รองรับมือถือ */
+        .navbar { 
+            position: fixed; top: 0; width: 100%; padding: 15px 5%; 
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; 
+            z-index: 100; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,0,0,0.2);
+        }
+        .nav-logo { font-family: 'Orbitron'; font-weight: 900; color: var(--primary); font-size: clamp(0.7rem, 2vw, 1rem); letter-spacing: 2px; }
+        .nav-links { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+        .nav-item {
+            font-family: 'Orbitron'; font-size: clamp(0.6rem, 1.5vw, 0.8rem); color: #888; background: none; border: none; 
+            cursor: pointer; transition: 0.4s; padding: 8px 12px;
+        }
+        .nav-item.active, .nav-item:hover { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+
+        /* Main Container */
+        .container { width: 100%; max-width: 1400px; margin: 0 auto; padding-top: 100px; position: relative; }
+        .section { display: none; flex-direction: column; align-items: center; padding: 20px 5% 100px; width: 100%; }
+        .section.active { display: flex; animation: fadeIn 0.5s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Hero Box ปรับฟอนต์ออโต้ */
+        .hero-box h1 { 
+            font-family: 'Orbitron'; 
+            font-size: clamp(2.5rem, 12vw, 7rem); 
+            line-height: 0.9; text-align: center; margin-bottom: 15px; 
+        }
+        .hero-box h1 span { color: var(--primary); text-shadow: 0 0 30px rgba(255,0,0,0.5); }
+        .hero-tag { text-align: center; letter-spacing: clamp(2px, 1vw, 5px); color: #666; font-size: clamp(0.6rem, 1.5vw, 0.8rem); margin-bottom: 40px; }
+
+        /* Grid ปรับขนาดอัตโนมัติ */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+            gap: 20px; width: 100%; margin-top: 30px;
+        }
+        .history-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            padding: clamp(15px, 3vw, 25px); transition: 0.3s; border-radius: 4px; cursor: pointer;
+            display: flex; flex-direction: column; height: 100%;
+        }
+        .history-card:hover { border-color: var(--primary); background: rgba(255,0,0,0.07); transform: translateY(-5px); }
+
+        /* Reader Fullscreen */
+        .fullscreen-reader {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.98);
+            z-index: 2000; display: none; overflow-y: auto; padding: 5vw 20px;
+        }
+        .fullscreen-reader.open { display: block; }
+        .reader-close { position: fixed; top: 20px; right: 20px; color: var(--primary); font-size: 2rem; background: none; border: none; cursor: pointer; z-index: 2100; }
+        .reader-body { max-width: 900px; margin: 0 auto; text-align: center; }
+        .reader-img { width: 100%; max-height: 50vh; object-fit: cover; border: 1px solid var(--primary); margin-bottom: 25px; border-radius: 4px; }
+        
+        #reader-content { 
+            font-family: 'Sarabun'; 
+            font-size: clamp(1rem, 1.2vw, 1.1rem);
+            line-height: 1.8; 
+            text-align: justify; 
+            color: #ddd;
+            white-space: pre-wrap; 
+        }
+
+        /* Video Responsive */
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 25px 0; border: 1px solid var(--primary); }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        /* Buttons */
+        .exit-btn {
+            background: transparent; border: 1px solid var(--primary);
+            color: var(--primary); font-family: 'Orbitron'; padding: 12px 30px;
+            cursor: pointer; transition: 0.3s; font-size: clamp(0.7rem, 1.2vw, 0.9rem); letter-spacing: 2px;
+            width: fit-content; margin: 10px auto;
+        }
+        .exit-btn:hover { background: var(--primary); color: #000; box-shadow: 0 0 20px var(--primary); }
+
+        .external-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 20px; border: 1px solid var(--gold); color: var(--gold); 
+            font-family: 'Orbitron'; text-decoration: none; transition: 0.3s; 
+            font-size: 0.75rem; gap: 8px; border-radius: 2px;
+        }
+        .external-btn:hover { background: var(--gold); color: #000; box-shadow: 0 0 15px var(--gold); }
+
+        .footer-info { position: fixed; bottom: 10px; width: 100%; text-align: center; font-family: 'Orbitron'; font-size: 0.6rem; color: var(--primary); opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+
+<body>
+
+<div class="bg-main"></div>
+<canvas id="network-canvas"></canvas>
+<div class="vignette"></div>
+
+<div class="fullscreen-reader" id="reader">
+    <button class="reader-close" onclick="closeReader()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="reader-body">
+        <img id="reader-img" class="reader-img" src="" alt="">
+        <h2 id="reader-title" style="color:var(--primary); font-family:'Orbitron'; margin-bottom:20px; font-size: clamp(1.5rem, 4vw, 2.5rem);"></h2>
+        <div id="reader-content"></div>
+        <button class="exit-btn" style="margin-top:50px;" onclick="closeReader()">CLOSE / ปิดหน้าต่าง</button>
+    </div>
+</div>
+
+<nav class="navbar">
+    <div class="nav-logo">QIN SHI HUANG</div>
+    <div class="nav-links">
+        <button class="nav-item active" onclick="showView('home', this)">หน้าหลัก</button>
+        <button class="nav-item" onclick="showView('history', this)">การรวมแผ่นดิน</button>
+        <button class="nav-item" onclick="showView('legacy', this)">ประวัติส่วนตัว</button>
+        <button class="nav-item" onclick="showView('contact', this)">ติดต่อเรา</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div id="home" class="section active">
+        <div class="hero-box">
+            <h1>QIN SHI <br><span>HUANG</span></h1>
+            <p class="hero-tag">THE FIRST EMPEROR WHO UNITED CHINA</p>
+        </div>
+        <button class="exit-btn" onclick="document.querySelectorAll('.nav-item')[1].click()">เริ่มสำรวจประวัติศาสตร์</button>
+    </div>
+
+    <div id="history" class="section">
+        <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 10px;">สงคราม และ การยึดครอง</h2>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">THE SIX CONQUESTS & STRATEGY</p>
+        <div class="history-grid" id="historyGrid"></div>
+    </div>
+
+    <div id="legacy" class="section">
+        <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 10px;">จิตวิทยาและชีวิตส่วนตัว</h2>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">PERSONALITY & IMMORTALITY</p>
+        <div class="history-grid" id="legacyGrid"></div>
+    </div>
+   
+    <div id="contact" class="section">
+        <h2 style="font-family: 'Orbitron'; color: var(--primary); margin-bottom: 10px;">ติดต่อเรา</h2>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">DEVELOPER INFORMATION</p>
+        <div class="history-grid" id="contactGrid"></div>
+    </div>
+</div>
+
+<div class="footer-info" id="time-display">00:00:00</div>
+
+<script>
+    // ระบบอ่านเสียง
+    let synth = window.speechSynthesis;
+    let currentUtterance = null;
+
+    function startSpeaking(text) {
+        stopSpeaking(); 
+        const cleanText = text.replace(/<br>/g, " ");
+        currentUtterance = new SpeechSynthesisUtterance(cleanText);
+        currentUtterance.lang = 'th-TH'; 
+        currentUtterance.rate = 1.0;
+        synth.speak(currentUtterance);
+    }
+
+    function stopSpeaking() {
+        if (synth.speaking) { synth.cancel(); }
+    }
+
+    // ข้อมูล 
+    const historyData = [
+        {
+            icon: "fa-crown",
+            title: "จุดเริ่มต้นการรวมแผ่นดิน", 
+            img: "https://i.pinimg.com/1200x/30/bb/65/30bb65a871163bc280c1e7943a2603b3.jpg",
+            short: "จากความแตกแยกสู่จักรวรรดิเดียว", 
+            full: "ก่อนที่จีนจะกลายเป็นประเทศเดียว จีนเคยเป็นดินแดนที่แตกแยกเต็มไปด้วยสงครามยุคจ้านกว๋อ...",
+            youtubeId: "_jQ_4Qu6qKg",
+            externalLink: "https://tutor-vip.com/who-is-qin-shi-huang/"
+        },
+     
+    ];
+
+    const legacyData = [
+        {
+            icon: "fa-brain",
+            title: "ชีวิตวัยเด็กและความโดดเดี่ยว",
+            img: "https://i.pinimg.com/736x/85/19/1c/85191c0ab8e4f743f29396704f41b926.jpg",
+            short: "รากฐานแห่งความหวาดระแวง",
+            full: "พระองค์ถือกำเนิดและเติบโตในโลกของราชสำนักที่ทุกคำพูดอาจซ่อนคมดาบ...",
+            youtubeId: "8w3vsh_OCU0"
+        }
+    ];
+
+    const contactData = [
+        {
+            icon: "fa-user-tie",
+            title: "ผู้จัดทำ / Developer",
+            short: "รายชื่อคณะผู้จัดทำโปรเจกต์",
+            full: "ชื่อผู้จัดทำ: [นาย ชวนากร ตะเพียนทอง] รหัส: 66202040053\nชื่อผู้จัดทำ: [นาย วิษณุ เชาวน์โอภาส] รหัส: 66202040132\nชื่อผู้จัดทำ: [นาย ธนาธิป พรสวัสดิ์] รหัส: 66202040131",
+            img: "https://i.pinimg.com/736x/bb/5c/47/bb5c472fda22972967416153a3127230.jpg"
+        }
+    ];
+
+    // ฟังก์ชัน Render การ์ด
+    function render(containerId, data) {
+        const grid = document.getElementById(containerId);
+        if(!grid) return;
+        grid.innerHTML = '';
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'history-card';
+            card.innerHTML = `
+                <i class="fa-solid ${item.icon}" style="color:var(--primary); margin-bottom:15px; font-size:1.5rem;"></i>
+                <h3 style="font-family:'Orbitron'; font-size:1rem; color:var(--primary); margin-bottom:10px;">${item.title}</h3>
+                <p style="font-size:0.9rem; color:#888;">${item.short}</p>
+            `;
+            card.onclick = () => openReader(item);
+            grid.appendChild(card);
+        });
+    }
+
+    function openReader(item) {
+        const readerContent = document.getElementById('reader-content');
+        document.getElementById('reader-img').src = item.img || '';
+        document.getElementById('reader-title').innerText = item.title;
+
+        const textForSpeech = item.full.replace(/\n/g, " ");
+        const formattedFull = item.full.replace(/\n/g, '<br>');
+        
+        let html = `<p style="margin-bottom:20px;">${formattedFull}</p>`;
+        
+        html += `
+        <div style="display: flex; gap: 10px; margin: 20px 0;">
+            <button class="external-btn" onclick="startSpeaking('${textForSpeech}')"><i class="fa-solid fa-play"></i> ฟังเสียง</button>
+            <button class="external-btn" style="border-color:#ff4444; color:#ff4444;" onclick="stopSpeaking()"><i class="fa-solid fa-stop"></i> หยุด</button>
+        </div>`;
+
+        if(item.youtubeId) {
+            html += `<div class="video-container"><iframe src="https://www.youtube.com/embed/${item.youtubeId}" allowfullscreen></iframe></div>`;
+        }
+
+        readerContent.innerHTML = html;
+        document.getElementById('reader').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeReader() {
+        stopSpeaking(); 
+        document.getElementById('reader').classList.remove('open');
+        document.body.style.overflow = 'auto';
+    }
+
+    function showView(viewId, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+        btn.classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    // เริ่มต้นทำงาน
+    render('historyGrid', historyData);
+    render('legacyGrid', legacyData);
+    render('contactGrid', contactData);
+    
+    setInterval(() => { 
+        document.getElementById('time-display').innerText = new Date().toLocaleTimeString(); 
+    }, 1000);
+
+    // Network Animation
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let dots = [];
+    function init() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        dots = Array.from({length:30}, () => ({ 
+            x: Math.random()*canvas.width, y: Math.random()*canvas.height, 
+            vx: (Math.random()-0.5), vy: (Math.random()-0.5) 
+        }));
+    }
+    function animate() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        dots.forEach(d => {
+            d.x += d.vx; d.y += d.vy;
+            if(d.x<0 || d.x>canvas.width) d.vx *= -1;
+            if(d.y<0 || d.y>canvas.height) d.vy *= -1;
+            ctx.fillStyle = "rgba(255,0,0,0.2)";
+            ctx.beginPath(); ctx.arc(d.x, d.y, 1, 0, Math.PI*2); ctx.fill();
+        });
+        requestAnimationFrame(animate);
+    }
+    init(); animate(); window.addEventListener('resize', init);
+</script>
+
+</body>
+</html>
